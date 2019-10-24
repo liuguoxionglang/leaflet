@@ -1,0 +1,2 @@
+# leaflet
+利用leaflet 及其插件fusesearch构建一个地图上的poi搜索功能，此基础数据利用geojson构建
