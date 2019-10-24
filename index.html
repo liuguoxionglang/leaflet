@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>leaflet</title>
+    <link rel="stylesheet" href="./leaflet.css" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css" />
+    <link rel="stylesheet" href="./fusesearch.css" type="text/css">
+    <style>
+        #map{
+            height:1080px;
+            width: 1920px;
+        }
+    </style>
+</head>
+<body>
+<div id = 'map'></div>
+<script type="text/javascript" src="./jquery.js"></script>
+<script type="text/javascript" src="./leaflet.js"></script>
+<script type="text/javascript" src="./leaflet.infopan.js"></script>
+<script type="text/javascript" src="./modernir.js"></script>
+<script type="text/javascript" src="./analytics.js"></script>
+<script type="text/javascript" src="./fuse.js"></script>
+<script type="text/javascript" src="./fusesearch.js"></script>
+<!--<script type="text/javascript" src="../heapmap.js"></script>-->
+<!--<script type="text/javascript" src="../leaflet-heapmap.js"></script>-->
+
+
+<script type="text/javascript" >
+
+    var testData = {
+        max: 1800,
+        data: [
+//            {lat: 24.6408, lng:46.7728, count: 3},{lat: 50.75, lng:-1.55, count: 1}
+            {lat: 36.013803, lng:103.97091, count: 1},
+            {lat: 35.903803, lng:103.98091, count: 14},
+            {lat: 36.903803, lng:103.98091, count: 4},
+            {lat: 36.103803, lng:103.98091, count: 99},
+            {lat: 36.023803, lng:103.96091, count: 140},
+            {lat: 36.005803, lng:103.91091, count: 145},
+            {lat: 35.013803, lng:104.98091, count: 1411},
+            {lat: 36.803803, lng:103.99091, count: 4},
+            {lat: 36.183803, lng:102.90091, count: 99},
+            {lat: 36.323803, lng:103.06991, count: 140},
+            {lat: 35.005803, lng:143.91091, count: 145},
+            {lat: 34.013803, lng:104.98091, count: 1411},
+            {lat: 36.203803, lng:105.07091, count: 4},
+            {lat: 36.303803, lng:103.92091, count: 99},
+            {lat: 36.523803, lng:103.90091, count: 140},
+            {lat: 36.405803, lng:103.91991, count: 145},
+            {lat: 34.013803, lng:103.98091, count: 1411},
+
+            ]
+    };
+
+//    var baseLayer = L.tileLayer(
+//        'http://192.168.0.208:8080/img/{z}/{x}/{y}.png',{
+////            attribution: '...',
+//            maxZoom: 16
+//        }
+//    );
+
+//    var config = {  //热力图的配置项
+//        radius: '2',       //设置每一个热力点的半径
+//        maxOpacity: 0.8,        //设置最大的不透明度
+//        // minOpacity: 0.3,     //设置最小的不透明度
+//        scaleRadius: true,      //设置热力点是否平滑过渡
+//        blur: 0.95,             //系数越高，渐变越平滑，默认是0.85,
+//                                //滤镜系数将应用于所有热点数据。
+//        useLocalExtrema: true,  //使用局部极值
+//        latField: 'latitude',   //维度
+//        lngField: 'longitude',  //经度
+//        valueField: 'count',    //热力点的值
+//        gradient: {   "0.99": "rgba(255,0,0,1)",
+//            "0.9": "rgba(255,255,0,1)",
+//            "0.8": "rgba(0,255,0,1)",
+//            "0.5": "rgba(0,255,255,1)",
+//            "0": "rgba(0,0,255,1)"
+//        },
+//        //过渡，颜色过渡和过渡比例,范例：
+//        /*
+//            {   "0.99": "rgba(255,0,0,1)",
+//                "0.9": "rgba(255,255,0,1)",
+//                "0.8": "rgba(0,255,0,1)",
+//                "0.5": "rgba(0,255,255,1)",
+//                "0": "rgba(0,0,255,1)"
+//            }
+//        */
+//        // backgroundColor: 'rgba(27,34,44,0.5)'    //热力图Canvas背景
+//    }
+
+//    var cfg = {
+//        "radius": 50,
+//        "maxOpacity": .8,
+//        "scaleRadius": false,
+//        "useLocalExtrema": true,
+//        latField: 'lat',
+//        lngField: 'lng',
+//        valueField: 'count'
+//    };
+//
+//    var heatmapLayer = new HeatmapOverlay(cfg);
+//
+//    var map = new L.Map('map', {
+//        center: new L.LatLng(36.003803, 103.97091),
+//        zoom: 14,
+//        layers: [baseLayer, heatmapLayer]
+//    });
+//    heatmapLayer.setData(testData);
+
+    // TODO
+    // - request API key for OSM
+    // - add contributors : map icons, Fuse.js
+    // - use sprites for icons
+    // - icon is reloaded when making a layer visible again
+    // - layers control : add All on/off toggle ?
+    // - improve Fuse.js to consider accents ...
+
+    var categories = {
+        101 : {desc: "MusÃ©es & ChÃ¢teaux", icon:"cinema.png"},
+        103 : {desc: "MÃ©diathÃ¨que", icon:"cinema.png"},
+        104 : {desc: "Monument", icon:"cinema.png"},
+        105 : {desc: "Ecole Culturelle", icon:"cinema.png"},
+        106 : {desc: "Salle d'exposition", icon:"cinema.png"},
+        107 : {desc: "Salle de spectacle", icon:"cinema.png"},
+        108 : {desc: "CinÃ©ma", icon:"cinema.png"}
+    };
+
+    var setupIcons = function() {
+
+        var icons = {};
+        for (var cat in categories) {
+            var icon = categories[cat].icon;
+            var url = "images/" + icon;
+
+            var icon = L.icon({
+                iconUrl: url,
+                iconSize: [32, 32],
+                iconAnchor: [16, 37],
+                popupAnchor: [0, -28]
+            });
+            icons[cat] = icon;
+        }
+
+        return icons;
+    };
+
+    var map;
+
+    $(function() {
+
+        // Set map height to remaining window height
+        // FIXME Best done with CSS
+        $(window).resize(function() {
+            // remaining height - 22 (wrapper bottom padding + map border + 1) !
+            $('#map').height($(window).height() - $('#map').offset().top - 22);
+        });
+        $(window).resize();
+
+        // Create a Leaflet map with OSM background
+        var osmLayer = L.tileLayer(
+            'http://192.168.0.208:8080/img/{z}/{x}/{y}.png',{
+//            attribution: '...',
+                maxZoom: 16
+            }
+        );
+        map = L.map('map', {
+            center: new L.LatLng(36.003803, 103.97091),
+            zoom: 14,
+            layers: [osmLayer]
+        });
+
+
+        // Layer control, setting up 1 layer per category
+        var layers = {},
+            cultureLayer = L.layerGroup(),
+            layerCtrl = L.control.layers();
+        for (var icat in categories) {
+            var layer = L.featureGroup();
+            layers[icat] = layer;
+            cultureLayer.addLayer(layer);
+
+            var cat = categories[icat],
+                desc = '<img class="layer-control-img" src="../images/' + cat.icon + '"> ' + cat.desc;
+            layerCtrl.addOverlay(layer, desc);
+        }
+        cultureLayer.addTo(map);
+
+        // Information pane
+//        L.control.infoPane('infopane', {position: 'bottomright'}).addTo(map);
+
+        // Add fuse search control
+        var options = {
+            position: 'topright',
+            title: 'Chercher',
+            placeholder: 'ex: rezÃ©, cinÃ©ma, biblio',
+            maxResultLength: 15,
+            threshold: 0.5,
+            showInvisibleFeatures: true,
+            showResultFct: function(feature, container) {
+                props = feature.properties;
+                var name = L.DomUtil.create('b', null, container);
+                name.innerHTML = props.nom_comple;
+
+                container.appendChild(L.DomUtil.create('br', null, container));
+
+                var cat = props.libtype ? props.libtype : props.libcategor,
+                    info = '' + cat + ', ' + props.commune;
+                container.appendChild(document.createTextNode(info));
+            }
+        };
+        var fuseSearchCtrl = L.control.fuseSearch(options);
+        map.addControl(fuseSearchCtrl);
+
+        layerCtrl.addTo(map);
+
+        var icons = setupIcons();
+
+        // Load the dataE:\webstrom_workspace\svn\com\zlkj\collection\traffic\gansuzongduiFive\public\leaflet_map\example\data\lieux_culture_nantes.json
+        jQuery.getJSON("./data/lieux_culture_nantes.json", function(data) {
+            alert(666)
+            console.log(data,"/////////////.....lieux_culture_nantes.json.........")
+            displayFeatures(data.features, layers, icons);
+            var props = ['nom_comple', 'libcategor', 'commune'];
+            fuseSearchCtrl.indexFeatures(data.features, props);
+        });
+
+    });
+
+    function displayFeatures(features, layers, icons) {
+
+        var popup = L.DomUtil.create('div', 'tiny-popup', map.getContainer());
+
+        for (var id in features) {
+            var feat = features[id];
+            var cat = feat.properties.categorie;
+            var site = L.geoJson(feat, {
+                pointToLayer: function(feature, latLng) {
+                    var icon = icons[cat];
+                    var marker = L.marker(latLng, {
+                        icon: icon,
+                        keyboard: false,
+                        riseOnHover: true
+                    });
+                    if (! L.touch) {
+                        marker.on('mouseover', function(e) {
+                            var nom = e.target.feature.properties.nom_comple;
+                            var pos = map.latLngToContainerPoint(e.latlng);
+                            popup.innerHTML = nom;
+                            L.DomUtil.setPosition(popup, pos);
+                            L.DomUtil.addClass(popup, 'visible');
+
+                        }).on('mouseout', function(e) {
+                            L.DomUtil.removeClass(popup, 'visible');
+                        });
+                    }
+                    return marker;
+                },
+                onEachFeature: bindPopup
+            });
+            var layer = layers[cat];
+            if (layer !== undefined) {
+                layer.addLayer(site);
+            }
+        }
+        return layers;
+    }
+
+    function bindPopup(feature, layer) {
+        // Keep track of the layer(marker)
+        feature.layer = layer;
+
+        var props = feature.properties;
+        if (props) {
+            var desc = '<span id="feature-popup">';
+            desc += '<strong>' + props.nom_comple + '</strong><br/>';
+
+            var cat = props.libtype ? props.libtype : props.libcategor;
+            if (cat !== null) {
+                desc += '<em>' + cat + '</em></br>';
+            }
+
+            var url = props.web;
+            if (url !== null) {
+                desc += '<a href="http://' + url + '" target=_blank>Site web</a></br>';
+            }
+
+            var address = '' + props.adresse + ' ' + props.code_posta + ' ' + props.commune;
+            desc += address + '<br/>';
+
+            if (props.telephone) {
+                desc += 'Tel: ' + props.telephone + '<br/>';
+            }
+
+            desc += '</span>';
+            layer.bindPopup(desc);
+        }
+    }
+
+
+
+
+</script>
+</body>
+</html>
